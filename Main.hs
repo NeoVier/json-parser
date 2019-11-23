@@ -12,7 +12,36 @@ data JsonValue
   | JsonString String
   | JsonArray [JsonValue]
   | JsonObject [(String, JsonValue)]
-  deriving (Show, Eq)
+  deriving (Eq)
+
+jsonToString :: Int -> JsonValue -> String
+jsonToString indent JsonNull = "null"
+jsonToString indent (JsonBool a)
+  | a = "true"
+  | otherwise = "false"
+jsonToString indent (JsonNum x) = show x
+jsonToString indent (JsonString s) = show s
+jsonToString indent (JsonArray []) = "[]"
+jsonToString indent (JsonArray xs) =
+  "[" ++
+  init (concatMap (showElement (indent + 1)) xs) ++
+  "\n" ++ indentation indent ++ "]"
+  where
+    showElement indent x =
+      "\n" ++ indentation indent ++ jsonToString (indent + 1) x ++ ","
+jsonToString indent (JsonObject []) = "{}"
+jsonToString indent (JsonObject xs) =
+  "{" ++ init (concatMap objToString xs) ++ "\n" ++ indentation indent ++ "}"
+  where
+    objToString (x, y) =
+      "\n" ++
+      indentation indent ++ show x ++ ": " ++ jsonToString (indent + 1) y ++ ","
+
+indentation :: Int -> String
+indentation x = concat $ replicate x "\t"
+
+instance Show JsonValue where
+  show = jsonToString 0
 
 newtype Parser a =
   Parser
@@ -117,7 +146,5 @@ parseFile fileName parser = do
   input <- readFile fileName
   return (snd <$> runParser parser input)
 
---parseFile :: FilePath -> IO ()
---parseFile fileName = do
 main :: IO ()
 main = undefined
