@@ -1,5 +1,5 @@
 module Parser
-  ( Parser
+  ( Parser(..)
   , charP
   , stringP
   , spanP
