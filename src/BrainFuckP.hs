@@ -1,6 +1,7 @@
 module BrainFuckP
   ( BrainFuckValue(..)
   , brainFuckValue
+  , brainFuckComment
   ) where
 
 import Control.Applicative
@@ -38,12 +39,15 @@ brainFuckAcceptP = BrainFuckAccept <$ charP ','
 brainFuckWhileP :: Parser BrainFuckValue
 brainFuckWhileP =
   BrainFuckWhile <$>
-  (charP '[' *> whitespace *> elements <* whitespace <* charP ']')
+  (charP '[' *> brainFuckComment *> elements <* brainFuckComment <* charP ']')
   where
-    elements = sepBy whitespace brainFuckSymbol
+    elements = sepBy brainFuckComment brainFuckSymbol
 
 brainFuckComment :: Parser BrainFuckValue
-brainFuckComment = BrainFuckComment <$ whitespace
+brainFuckComment =
+  BrainFuckComment <$ (whitespace *> spanP notBrainFuckSymbol <* whitespace)
+  where
+    notBrainFuckSymbol x = x `notElem` "><+-.,[]"
 
 brainFuckSymbol :: Parser BrainFuckValue
 brainFuckSymbol =
@@ -55,4 +59,4 @@ brainFuckSymbol =
   brainFuckWhileP
 
 brainFuckValue :: Parser [BrainFuckValue]
-brainFuckValue = sepBy whitespace brainFuckSymbol
+brainFuckValue = sepBy brainFuckComment brainFuckSymbol
