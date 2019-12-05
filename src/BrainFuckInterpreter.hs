@@ -32,21 +32,33 @@ executeBFOperation (Tape inputTape index) BrainFuckDecrement =
   Tape (replaceNth index newValue inputTape) index
   where
     newValue = (inputTape !! index) - 1
-executeBFOperation inputTape BrainFuckOutput = inputTape -- TODO
-executeBFOperation inputTape BrainFuckAccept = inputTape -- TODO
-executeBFOperation inputTape (BrainFuckWhile operations)
-  | currByte inputTape == 0 = inputTape
-  | otherwise =
-    executeBFOperation
-      (runBrainFuck inputTape operations)
-      (BrainFuckWhile operations)
 executeBFOperation inputTape BrainFuckComment = inputTape
 
 currByte :: Tape -> Int
 currByte inputTape = tape inputTape !! index inputTape
 
-runBrainFuck :: Tape -> [BrainFuckValue] -> Tape
-runBrainFuck = foldl executeBFOperation
+runBrainFuck :: Tape -> [BrainFuckValue] -> IO Tape
+runBrainFuck inputTape [] = return inputTape
+runBrainFuck inputTape (BrainFuckOutput:ops) = do
+  let char = chr $ currByte inputTape
+  putChar char
+  runBrainFuck inputTape ops
+runBrainFuck inputTape (BrainFuckAccept:ops) = do
+  inputChar <- getChar
+  let charOrd = ord inputChar
+  let newTape =
+        Tape
+          (replaceNth (index inputTape) charOrd (tape inputTape))
+          (index inputTape)
+  runBrainFuck newTape ops
+runBrainFuck inputTape (BrainFuckWhile operations:ops)
+  | currByte inputTape == 0 = runBrainFuck inputTape ops
+  | otherwise = do
+    resultingTape <- runBrainFuck inputTape operations
+    runBrainFuck resultingTape (BrainFuckWhile operations : ops)
+runBrainFuck inputTape (op:ops) = do
+  let resultingTape = executeBFOperation inputTape op
+  runBrainFuck resultingTape ops
 
 replaceNth :: Int -> a -> [a] -> [a]
 replaceNth _ _ [] = []
