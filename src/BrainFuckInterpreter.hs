@@ -2,6 +2,7 @@ module BrainFuckInterpreter
   ( Tape(..)
   , executeBFOperation
   , runBrainFuck
+  , newTape
   ) where
 
 import BrainFuckP
